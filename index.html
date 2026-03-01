@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>PEAK RADIO — Chamonix Sound System</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Syne:wght@400;700;800&family=DM+Mono:ital,wght@0,400;1,400&display=swap" rel="stylesheet"/>
+
+<style>
+/* ════════════════════════════════════════════════════════════
+   VARIABLES — modifie ici
+════════════════════════════════════════════════════════════ */
+:root {
+  --night:      #0e0f18;     /* fond très sombre bleu nuit */
+  --deep:       #141724;     /* cartes */
+  --deeper:     #1c2035;     /* cartes 2 */
+  --lavender:   #a89fc8;     /* pastel violet */
+  --sage:       #8db5a0;     /* pastel vert sauge */
+  --peach:      #c9977a;     /* pastel pêche */
+  --ice:        #9ec4d4;     /* bleu glacier */
+  --snow:       #e8e4f0;     /* presque blanc */
+  --muted:      #4e5270;     /* texte secondaire */
+  --border:     rgba(168,159,200,0.18);
+
+  --f-display: 'Archivo Black', sans-serif;
+  --f-body:    'Syne', sans-serif;
+  --f-mono:    'DM Mono', monospace;
+
+  /* ← CHANGE TON FLUX ICI */
+  --stream-url: 'http://localhost:8000/stream';
+  --meta-url:   'http://localhost:8000/status-json.xsl';
+}
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  background:var(--night);
+  color:var(--snow);
+  font-family:var(--f-body);
+  overflow-x:hidden;
+  min-height:100vh;
+}
+
+/* Grain texture */
+body::before{
+  content:'';
+  position:fixed;inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  pointer-events:none;z-index:0;opacity:.8;
+}
+
+/* Subtle mountain atmosphere glow */
+body::after{
+  content:'';
+  position:fixed;
+  bottom:-10%;left:0;right:0;
+  height:50%;
+  background:radial-gradient(ellipse at 30% 100%, rgba(158,196,212,.07) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 100%, rgba(141,181,160,.05) 0%, transparent 50%);
+  pointer-events:none;z-index:0;
+}
+
+.wrap{position:relative;z-index:1;}
+
+::-webkit-scrollbar{width:5px;}
+::-webkit-scrollbar-track{background:var(--night);}
+::-webkit-scrollbar-thumb{background:var(--lavender);border-radius:3px;}
+
+/* ════════════════════════════════════════════════════════════
+   HEADER
+════════════════════════════════════════════════════════════ */
+header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:20px 48px;
+  border-bottom:1px solid var(--border);
+  position:sticky;top:0;z-index:100;
+  background:rgba(14,15,24,.88);
+  backdrop-filter:blur(18px);
+}
+
+.logo{display:flex;align-items:center;gap:14px;text-decoration:none;}
+
+/* Summit icon — CSS only */
+.summit-icon{
+  position:relative;
+  width:42px;height:42px;
+  display:flex;align-items:flex-end;justify-content:center;
+}
+.summit-icon::before{
+  content:'';
+  position:absolute;bottom:4px;left:4px;right:4px;
+  height:28px;
+  background:var(--ice);
+  clip-path:polygon(50% 0%,100% 100%,0% 100%);
+  opacity:.9;
+}
+.summit-icon::after{
+  content:'';
+  position:absolute;top:10px;left:50%;transform:translateX(-50%);
+  width:14px;height:9px;
+  background:var(--snow);
+  clip-path:polygon(50% 0%,100% 100%,0% 100%);
+}
+
+.logo-text{line-height:1;}
+.logo-name{
+  font-family:var(--f-display);
+  font-size:22px;letter-spacing:5px;
+  color:var(--snow);
+}
+.logo-tag{
+  font-family:var(--f-mono);font-size:9px;
+  color:var(--lavender);letter-spacing:3px;
+}
+
+nav{display:flex;gap:32px;}
+nav a{
+  font-family:var(--f-mono);font-size:11px;letter-spacing:2px;
+  text-transform:uppercase;color:var(--muted);text-decoration:none;
+  transition:color .2s;
+}
+nav a:hover{color:var(--ice);}
+
+.live-pill{
+  display:flex;align-items:center;gap:7px;
+  font-family:var(--f-mono);font-size:10px;letter-spacing:2px;
+  color:var(--sage);
+  border:1px solid rgba(141,181,160,.35);
+  padding:5px 13px;border-radius:20px;
+}
+.live-dot{
+  width:7px;height:7px;background:var(--sage);
+  border-radius:50%;animation:blink 1.4s ease-in-out infinite;
+}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:.15;}}
+
+/* ════════════════════════════════════════════════════════════
+   HERO MOUNTAIN SCENE
+════════════════════════════════════════════════════════════ */
+.hero{
+  position:relative;
+  padding:60px 48px 0;
+  overflow:hidden;
+  min-height:420px;
+  display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+}
+
+.hero-title{
+  font-family:var(--f-display);
+  font-size:clamp(52px,9vw,110px);
+  letter-spacing:6px;
+  line-height:.95;
+  color:var(--snow);
+  position:relative;z-index:2;
+}
+
+.hero-title span.accent{color:var(--lavender);}
+.hero-title span.accent2{color:var(--ice);}
+
+.hero-sub{
+  font-family:var(--f-mono);font-size:12px;
+  letter-spacing:4px;color:var(--muted);
+  margin-top:16px;position:relative;z-index:2;
+}
+
+/* === MOUNTAIN RANGE CSS === */
+.mountains{
+  position:absolute;
+  bottom:0;left:0;right:0;
+  height:260px;
+  pointer-events:none;
+}
+
+.mtn{position:absolute;bottom:0;}
+
+/* Montagne fond */
+.mtn-1{
+  left:-2%;
+  width:55%;height:200px;
+  background:var(--deeper);
+  clip-path:polygon(10% 100%,50% 0%,90% 100%);
+  opacity:.9;
+}
+.mtn-2{
+  left:20%;
+  width:50%;height:240px;
+  background:#171a2a;
+  clip-path:polygon(5% 100%,45% 5%,80% 60%,95% 100%);
+}
+.mtn-3{
+  right:-2%;
+  width:55%;height:210px;
+  background:var(--deep);
+  clip-path:polygon(10% 100%,60% 0%,100% 100%);
+  opacity:.85;
+}
+/* Neige sommets */
+.mtn-snow-1{
+  left:calc(50% - 220px + 0px);
+  width:220px;height:70px;
+  top:0;
+  background:rgba(232,228,240,.12);
+  clip-path:polygon(20% 100%,50% 0%,80% 100%);
+  position:absolute;
+}
+.mtn-snow-2{
+  left:calc(20% + 0px);right:calc(20% + 0px);
+  width:38%;height:60px;
+  top:40px;
+  background:rgba(232,228,240,.08);
+  clip-path:polygon(15% 100%,50% 0%,85% 100%);
+  position:absolute;
+}
+
+/* Piste ski — ligne diagonale */
+.slope{
+  position:absolute;
+  bottom:0;right:10%;
+  width:200px;height:180px;
+  border-right:2px dashed rgba(158,196,212,.18);
+  transform:rotate(-28deg);
+  transform-origin:bottom right;
+}
+
+/* ════════════════════════════════════════════════════════════
+   RIDERS CSS — bonhommes snowboard style
+════════════════════════════════════════════════════════════ */
+
+/* Rider 1 — style "grind" penché */
+.rider{
+  position:absolute;
+  z-index:10;
+  bottom:20px;
+}
+
+.rider-1{ right:18%; animation:float1 4s ease-in-out infinite; }
+.rider-2{ right:34%; bottom:10px; transform:scaleX(-1); animation:float2 5s ease-in-out infinite; }
+
+@keyframes float1{
+  0%,100%{transform:translateY(0) rotate(-5deg);}
+  50%{transform:translateY(-12px) rotate(-8deg);}
+}
+@keyframes float2{
+  0%,100%{transform:scaleX(-1) translateY(0);}
+  50%{transform:scaleX(-1) translateY(-8px);}
+}
+
+/* Corps du rider en SVG inline */
+.rider svg{
+  width:70px;height:100px;
+  filter:drop-shadow(0 4px 12px rgba(0,0,0,.6));
+}
+
+/* Rider 3 — petit tag graf au sol */
+.graf-tag{
+  position:absolute;
+  bottom:8px;left:15%;
+  font-family:var(--f-display);
+  font-size:13px;letter-spacing:3px;
+  color:var(--lavender);
+  opacity:.4;
+  transform:rotate(-2deg);
+  z-index:10;
+}
+
+/* Sticker "FRESH TRACKS" */
+.sticker{
+  position:absolute;
+  top:30px;right:48px;
+  width:80px;height:80px;
+  border:2px solid var(--peach);
+  border-radius:50%;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  text-align:center;
+  animation:spin 20s linear infinite;
+  z-index:5;
+}
+.sticker span{
+  font-family:var(--f-mono);font-size:8px;
+  letter-spacing:2px;color:var(--peach);
+  text-transform:uppercase;
+}
+@keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+
+/* ════════════════════════════════════════════════════════════
+   PLAYER STICKY
+════════════════════════════════════════════════════════════ */
+#player{
+  position:fixed;
+  bottom:0;left:0;right:0;z-index:200;
+  background:rgba(12,13,22,.95);
+  border-top:1px solid var(--border);
+  backdrop-filter:blur(24px);
+  padding:10px 40px 14px;
+}
+
+#player.playing{border-top-color:rgba(158,196,212,.5);}
+
+.player-inner{
+  max-width:1100px;margin:0 auto;
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;gap:20px;
+}
+
+/* Viz bar above player */
+.player-viz{
+  height:40px;width:100%;max-width:1100px;margin:0 auto 6px;
+  display:block;
+}
+
+/* Track info */
+.track-info{display:flex;align-items:center;gap:12px;overflow:hidden;}
+
+.track-thumb{
+  width:44px;height:44px;flex-shrink:0;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:linear-gradient(135deg,var(--deep),var(--deeper));
+  display:grid;place-items:center;font-size:20px;
+  position:relative;overflow:hidden;
+}
+.track-thumb::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(158,196,212,.15),transparent);
+}
+
+.track-name{
+  font-family:var(--f-display);font-size:13px;
+  letter-spacing:.5px;color:var(--snow);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.track-station{
+  font-family:var(--f-mono);font-size:9px;
+  letter-spacing:2px;color:var(--lavender);
+  margin-top:2px;
+}
+
+/* Controls */
+.controls{display:flex;flex-direction:column;align-items:center;gap:7px;}
+.controls-row{display:flex;align-items:center;gap:16px;}
+
+.btn-play{
+  width:48px;height:48px;border-radius:50%;
+  border:1.5px solid var(--ice);
+  background:rgba(158,196,212,.1);
+  color:var(--snow);cursor:pointer;
+  display:grid;place-items:center;font-size:18px;
+  transition:all .25s;
+}
+.btn-play:hover{background:var(--ice);color:var(--night);transform:scale(1.08);}
+.btn-play:active{transform:scale(.95);}
+
+.btn-sm{
+  background:transparent;
+  border:1px solid rgba(255,255,255,.1);
+  color:var(--muted);width:34px;height:34px;
+  border-radius:50%;display:grid;place-items:center;
+  cursor:pointer;font-size:13px;transition:all .2s;
+}
+.btn-sm:hover{border-color:var(--lavender);color:var(--lavender);}
+
+/* Progress */
+.prog-row{display:flex;align-items:center;gap:10px;width:300px;}
+.prog-lbl{font-family:var(--f-mono);font-size:9px;color:var(--muted);min-width:30px;text-align:center;}
+.prog-bar{
+  flex:1;height:3px;background:rgba(255,255,255,.08);
+  border-radius:2px;position:relative;cursor:pointer;
+}
+.prog-fill{
+  height:100%;width:0;
+  background:linear-gradient(90deg,var(--lavender),var(--ice));
+  border-radius:2px;transition:width .5s linear;
+}
+.prog-dot{
+  position:absolute;top:50%;left:0;
+  transform:translate(-50%,-50%);
+  width:10px;height:10px;
+  background:var(--ice);border-radius:50%;
+  opacity:0;transition:opacity .2s;
+}
+.prog-bar:hover .prog-dot{opacity:1;}
+
+/* Vol */
+.vol-row{display:flex;align-items:center;gap:8px;justify-content:flex-end;}
+.vol-lbl{font-size:13px;color:var(--muted);}
+
+input[type=range].vol{
+  -webkit-appearance:none;appearance:none;
+  width:80px;height:3px;border-radius:2px;
+  background:rgba(255,255,255,.12);cursor:pointer;outline:none;
+}
+input[type=range].vol::-webkit-slider-thumb{
+  -webkit-appearance:none;width:12px;height:12px;
+  border-radius:50%;background:var(--sage);
+  box-shadow:0 0 6px rgba(141,181,160,.5);cursor:pointer;
+}
+
+/* ════════════════════════════════════════════════════════════
+   MAIN LAYOUT
+════════════════════════════════════════════════════════════ */
+main{
+  max-width:1200px;margin:0 auto;
+  padding:50px 48px 200px;
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:28px;
+}
+
+/* Section headers */
+.s-tag{
+  font-family:var(--f-mono);font-size:9px;
+  letter-spacing:4px;color:var(--lavender);
+  text-transform:uppercase;margin-bottom:6px;
+}
+.s-title{
+  font-family:var(--f-display);font-size:32px;
+  letter-spacing:2px;color:var(--snow);
+  margin-bottom:22px;
+}
+.s-title::after{
+  content:'';display:block;height:2px;width:40px;
+  background:var(--lavender);margin-top:8px;opacity:.6;
+}
+
+/* Card base */
+.card{
+  background:var(--deep);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px;margin-bottom:18px;
+  transition:border-color .3s;
+}
+.card:hover{border-color:rgba(168,159,200,.35);}
+
+/* ════════════════════════════════════════════════════════════
+   PLAYLIST
+════════════════════════════════════════════════════════════ */
+.pl-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+  transition:background .2s;border-radius:6px;
+}
+.pl-item:last-child{border-bottom:none;}
+.pl-item:hover{background:rgba(168,159,200,.05);padding:10px 8px;margin:0 -8px;}
+
+.pl-num{font-family:var(--f-mono);font-size:11px;color:var(--muted);min-width:20px;}
+.pl-dot{
+  width:36px;height:36px;flex-shrink:0;border-radius:7px;
+  background:linear-gradient(135deg,var(--deeper),#222840);
+  border:1px solid var(--border);
+  display:grid;place-items:center;font-size:15px;
+}
+.pl-info{flex:1;overflow:hidden;}
+.pl-song{font-weight:700;font-size:13px;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pl-artist{font-family:var(--f-mono);font-size:10px;color:var(--muted);margin-top:2px;}
+.pl-time{font-family:var(--f-mono);font-size:10px;color:var(--muted);}
+
+.onair-tag{
+  background:rgba(141,181,160,.18);
+  color:var(--sage);
+  font-family:var(--f-mono);font-size:8px;
+  padding:2px 8px;border-radius:20px;
+  letter-spacing:1px;animation:blink 1.6s ease-in-out infinite;
+}
+
+/* ════════════════════════════════════════════════════════════
+   NEWS
+════════════════════════════════════════════════════════════ */
+.news-item{
+  display:flex;gap:16px;
+  padding:16px 0;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.news-item:last-child{border-bottom:none;}
+
+.news-date-block{text-align:center;min-width:46px;}
+.news-dd{font-family:var(--f-display);font-size:28px;color:var(--ice);line-height:1;}
+.news-mm{font-family:var(--f-mono);font-size:8px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;}
+
+.news-t{font-weight:700;font-size:13px;letter-spacing:.3px;margin-bottom:4px;}
+.news-b{font-family:var(--f-mono);font-size:11px;color:var(--muted);line-height:1.6;}
+
+.tag{
+  display:inline-block;font-family:var(--f-mono);font-size:8px;
+  letter-spacing:1px;padding:2px 8px;border-radius:10px;margin-top:6px;
+}
+.tag-evt{background:rgba(168,159,200,.15);color:var(--lavender);border:1px solid rgba(168,159,200,.3);}
+.tag-drop{background:rgba(158,196,212,.12);color:var(--ice);border:1px solid rgba(158,196,212,.25);}
+.tag-news{background:rgba(201,151,122,.12);color:var(--peach);border:1px solid rgba(201,151,122,.25);}
+
+/* ════════════════════════════════════════════════════════════
+   SIDEBAR
+════════════════════════════════════════════════════════════ */
+.sidebar{display:flex;flex-direction:column;gap:18px;}
+
+/* Stats */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.stat-b{
+  background:var(--deeper);border:1px solid var(--border);
+  border-radius:10px;padding:14px;text-align:center;
+}
+.stat-v{
+  font-family:var(--f-display);font-size:28px;
+  color:var(--ice);line-height:1;
+}
+.stat-l{font-family:var(--f-mono);font-size:8px;letter-spacing:2px;color:var(--muted);margin-top:4px;}
+
+/* Riders sidebar — mini bonhomme décoratif */
+.riders-deco{
+  position:relative;height:80px;overflow:hidden;
+  border-radius:10px;background:var(--deeper);
+  border:1px solid var(--border);
+  margin-bottom:0;
+  display:flex;align-items:flex-end;
+  padding:0 12px 8px;
+  gap:16px;
+}
+
+/* Petits riders côte à côte en SVG */
+.riders-deco svg{width:36px;height:56px;}
+
+/* Barre de niveaux audio */
+.bars{
+  display:flex;align-items:flex-end;gap:3px;height:36px;
+  padding-top:4px;
+}
+.b{
+  flex:1;border-radius:1px 1px 0 0;
+  min-height:4px;transition:height .08s ease;
+}
+
+/* Message */
+.msg-h{font-family:var(--f-display);font-size:18px;letter-spacing:2px;margin-bottom:12px;}
+.msg-ta, .msg-name{
+  width:100%;background:rgba(255,255,255,.04);
+  border:1px solid rgba(255,255,255,.08);border-radius:7px;
+  padding:10px 12px;color:var(--snow);
+  font-family:var(--f-body);font-size:13px;
+  outline:none;transition:border-color .2s;
+}
+.msg-ta{resize:none;display:block;margin-bottom:8px;}
+.msg-ta:focus,.msg-name:focus{border-color:var(--lavender);}
+.msg-btn{
+  margin-top:10px;width:100%;padding:10px;
+  background:linear-gradient(90deg,var(--lavender),var(--ice));
+  border:none;border-radius:7px;
+  color:var(--night);font-family:var(--f-display);
+  font-size:14px;letter-spacing:3px;cursor:pointer;
+  transition:opacity .2s,transform .15s;
+}
+.msg-btn:hover{opacity:.85;transform:translateY(-1px);}
+.msg-ok{
+  font-family:var(--f-mono);font-size:10px;
+  color:var(--sage);margin-top:8px;display:none;
+}
+
+/* ════════════════════════════════════════════════════════════
+   GRAFFITI SECTION — fond déco
+════════════════════════════════════════════════════════════ */
+.graf-deco{
+  position:relative;padding:40px 48px;
+  border-top:1px solid var(--border);
+  border-bottom:1px solid var(--border);
+  overflow:hidden;
+  margin-bottom:0;
+}
+.graf-bg{
+  position:absolute;inset:0;
+  display:flex;align-items:center;justify-content:center;
+  font-family:var(--f-display);
+  font-size:clamp(60px,12vw,160px);
+  color:transparent;
+  -webkit-text-stroke:1px rgba(168,159,200,.07);
+  pointer-events:none;letter-spacing:20px;
+  user-select:none;
+}
+.graf-content{position:relative;z-index:1;text-align:center;}
+.graf-content h2{
+  font-family:var(--f-display);
+  font-size:clamp(28px,4vw,48px);
+  letter-spacing:4px;color:var(--snow);
+  line-height:1.1;
+}
+.graf-content p{
+  font-family:var(--f-mono);font-size:11px;
+  color:var(--muted);letter-spacing:3px;margin-top:12px;
+}
+
+/* ════════════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════════════ */
+footer{
+  background:var(--deep);
+  border-top:1px solid var(--border);
+  padding:36px 48px;
+  margin-bottom:80px;
+}
+.foot-in{
+  max-width:1200px;margin:0 auto;
+  display:flex;justify-content:space-between;align-items:center;
+  flex-wrap:wrap;gap:16px;
+}
+.foot-copy{font-family:var(--f-mono);font-size:10px;color:var(--muted);letter-spacing:2px;line-height:1.8;}
+.socials{display:flex;gap:12px;}
+.socials a{
+  width:36px;height:36px;border-radius:8px;
+  border:1px solid var(--border);color:var(--muted);
+  display:grid;place-items:center;text-decoration:none;
+  font-size:14px;transition:all .2s;
+}
+.socials a:hover{border-color:var(--lavender);color:var(--lavender);}
+
+/* ════════════════════════════════════════════════════════════
+   RESPONSIVE
+════════════════════════════════════════════════════════════ */
+@media(max-width:900px){
+  header{padding:14px 20px;}
+  nav{display:none;}
+  main{grid-template-columns:1fr;padding:30px 20px 180px;}
+  .player-inner{grid-template-columns:1fr;justify-items:center;gap:8px;}
+  .track-info{justify-content:center;width:100%;}
+  .vol-row{justify-content:center;}
+  .prog-row{width:240px;}
+  #player{padding:8px 20px 12px;}
+  .hero{padding:40px 20px 0;}
+  main,.graf-deco,footer{padding-left:20px;padding-right:20px;}
+  .sticker{display:none;}
+}
+@media(max-width:480px){
+  .prog-row{width:180px;}
+  .hero-title{font-size:36px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<header>
+  <a class="logo" href="#">
+    <div class="summit-icon"></div>
+    <div class="logo-text">
+      <div class="logo-name">PEAK RADIO</div>
+      <div class="logo-tag">// Chamonix Sound System</div>
+    </div>
+  </a>
+
+  <nav>
+    <a href="#playlist">Tracklist</a>
+    <a href="#news">Actu</a>
+    <a href="#message">Drop</a>
+  </nav>
+
+  <div class="live-pill">
+    <div class="live-dot"></div>
+    ON AIR
+  </div>
+</header>
+
+<!-- ═══════════════ HERO ═══════════════ -->
+<section class="hero">
+  <!-- Sticker rotatif -->
+  <div class="sticker">
+    <span>FRESH</span>
+    <span style="font-size:10px;color:var(--peach);">★</span>
+    <span>TRACKS</span>
+    <span style="font-size:10px;color:var(--peach);">★</span>
+  </div>
+
+  <div class="hero-title">
+    <div><span class="accent">PEAK</span></div>
+    <div>RADIO</div>
+    <div style="font-size:40%;letter-spacing:12px;color:var(--ice);margin-top:4px;">CHAMONIX</div>
+  </div>
+  <div class="hero-sub">// son pur, sommets hauts, vibes raw — altitude 1035m</div>
+
+  <!-- Mountain scene -->
+  <div class="mountains">
+    <div class="mtn mtn-1"></div>
+    <div class="mtn mtn-2"></div>
+    <div class="mtn mtn-3"></div>
+    <div class="mtn-snow-1"></div>
+    <div class="mtn-snow-2"></div>
+    <div class="slope"></div>
+
+    <!-- Rider 1 — ollie grab -->
+    <div class="rider rider-1">
+      <svg viewBox="0 0 70 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- planche -->
+        <rect x="8" y="82" width="54" height="7" rx="3.5" fill="#a89fc8" transform="rotate(-15,35,86)"/>
+        <!-- fixations -->
+        <circle cx="22" cy="80" r="3" fill="#8db5a0"/>
+        <circle cx="44" cy="76" r="3" fill="#8db5a0"/>
+        <!-- jambes -->
+        <line x1="24" y1="78" x2="26" y2="63" stroke="#e8e4f0" stroke-width="5" stroke-linecap="round"/>
+        <line x1="43" y1="74" x2="39" y2="60" stroke="#e8e4f0" stroke-width="5" stroke-linecap="round"/>
+        <!-- corps -->
+        <rect x="27" y="42" width="16" height="22" rx="5" fill="#1c2035" stroke="#a89fc8" stroke-width="1.5"/>
+        <!-- veste col -->
+        <rect x="25" y="43" width="20" height="6" rx="3" fill="#a89fc8" opacity=".6"/>
+        <!-- bras gauche — grab en bas -->
+        <line x1="27" y1="50" x2="16" y2="68" stroke="#e8e4f0" stroke-width="4.5" stroke-linecap="round"/>
+        <!-- main grab -->
+        <circle cx="16" cy="70" r="3.5" fill="#9ec4d4"/>
+        <!-- bras droit — levé -->
+        <line x1="43" y1="49" x2="52" y2="38" stroke="#e8e4f0" stroke-width="4.5" stroke-linecap="round"/>
+        <!-- tête -->
+        <circle cx="35" cy="33" r="10" fill="#e8e4f0"/>
+        <!-- bonnet -->
+        <rect x="25" y="24" width="20" height="12" rx="5" fill="#8db5a0"/>
+        <rect x="25" y="29" width="20" height="5" rx="0" fill="#8db5a0"/>
+        <!-- pompon -->
+        <circle cx="35" cy="23" r="4" fill="#c9977a"/>
+        <!-- lunettes goggle -->
+        <rect x="27" y="31" width="16" height="7" rx="3.5" fill="#141724" stroke="#9ec4d4" stroke-width="1.2" opacity=".85"/>
+        <!-- reflet lunette -->
+        <rect x="29" y="32.5" width="5" height="4" rx="2" fill="#9ec4d4" opacity=".35"/>
+        <!-- casque -->
+        <path d="M25 32 Q25 22 35 22 Q45 22 45 32" stroke="#a89fc8" stroke-width="2" fill="none"/>
+        <!-- trainée de neige -->
+        <path d="M8 88 Q0 90 -8 86" stroke="rgba(232,228,240,0.3)" stroke-width="2" stroke-dasharray="2 3" fill="none"/>
+      </svg>
+    </div>
+
+    <!-- Rider 2 — carve détendu -->
+    <div class="rider rider-2">
+      <svg viewBox="0 0 70 100" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <!-- planche -->
+        <rect x="5" y="80" width="60" height="7" rx="3.5" fill="#c9977a" transform="rotate(8,35,84)"/>
+        <circle cx="20" cy="82" r="3" fill="#8db5a0"/>
+        <circle cx="48" cy="86" r="3" fill="#8db5a0"/>
+        <!-- jambes -->
+        <line x1="22" y1="80" x2="28" y2="64" stroke="#e8e4f0" stroke-width="5" stroke-linecap="round"/>
+        <line x1="46" y1="84" x2="42" y2="66" stroke="#e8e4f0" stroke-width="5" stroke-linecap="round"/>
+        <!-- corps — penché en avant carve -->
+        <rect x="26" y="44" width="17" height="22" rx="5" fill="#0e0f18" stroke="#c9977a" stroke-width="1.5" transform="rotate(-8,34,55)"/>
+        <!-- bras ouvert équilibre -->
+        <line x1="26" y1="50" x2="10" y2="45" stroke="#e8e4f0" stroke-width="4.5" stroke-linecap="round"/>
+        <line x1="43" y1="50" x2="58" y2="44" stroke="#e8e4f0" stroke-width="4.5" stroke-linecap="round"/>
+        <!-- tête -->
+        <circle cx="35" cy="32" r="10" fill="#e8e4f0"/>
+        <!-- casque/bonnet -->
+        <rect x="25" y="22" width="20" height="13" rx="5" fill="#9ec4d4"/>
+        <circle cx="35" cy="21" r="4" fill="#a89fc8"/>
+        <!-- lunettes -->
+        <rect x="27" y="30" width="16" height="7" rx="3.5" fill="#141724" stroke="#a89fc8" stroke-width="1.2" opacity=".9"/>
+        <rect x="29" y="31.5" width="5" height="4" rx="2" fill="#a89fc8" opacity=".3"/>
+        <!-- foulard qui vole -->
+        <path d="M25 47 Q18 42 12 48 Q8 52 14 54" stroke="#c9977a" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+
+    <!-- Petit tag graf sol -->
+    <div class="graf-tag">PEAK ★ CHAM</div>
+  </div>
+</section>
+
+<!-- ═══════════════ BANDE DÉCO GRAFFITI ═══════════════ -->
+<div class="graf-deco">
+  <div class="graf-bg">PEAK</div>
+  <div class="graf-content">
+    <h2>SON RAW.<br><span style="color:var(--lavender)">MONTAGNE HAUTE.</span></h2>
+    <p>// hip-hop & beats — du fond de la vallée au sommet du son</p>
+  </div>
+</div>
+
+<!-- ═══════════════ MAIN ═══════════════ -->
+<main>
+  <!-- COLONNE GAUCHE -->
+  <div>
+
+    <!-- TRACKLIST -->
+    <section id="playlist">
+      <p class="s-tag">// dernier passage</p>
+      <h2 class="s-title">TRACKLIST</h2>
+      <div class="card">
+        <div id="playlist-list"></div>
+      </div>
+    </section>
+
+    <!-- NEWS -->
+    <section id="news" style="margin-top:36px">
+      <p class="s-tag">// fresh off the wire</p>
+      <h2 class="s-title">ACTU</h2>
+      <div class="card">
+
+        <div class="news-item">
+          <div class="news-date-block">
+            <div class="news-dd">08</div>
+            <div class="news-mm">Mar</div>
+          </div>
+          <div>
+            <div class="news-t">Session live au Refuge — Chamonix 1810</div>
+            <div class="news-b">Set trap/soul en altitude avec DJ Fraîche & invités. Entrée avec forfait ou adhésion PEAK.</div>
+            <span class="tag tag-evt">EVENT</span>
+          </div>
+        </div>
+
+        <div class="news-item">
+          <div class="news-date-block">
+            <div class="news-dd">02</div>
+            <div class="news-mm">Mar</div>
+          </div>
+          <div>
+            <div class="news-t">Nouvelle émission — "BASE CAMP" chaque mardi 20h</div>
+            <div class="news-b">Hip-hop de la montagne à la rue. Interviews d'artistes locaux, sons inédits.</div>
+            <span class="tag tag-drop">ÉMISSION</span>
+          </div>
+        </div>
+
+        <div class="news-item">
+          <div class="news-date-block">
+            <div class="news-dd">22</div>
+            <div class="news-mm">Fév</div>
+          </div>
+          <div>
+            <div class="news-t">On passe le cap des 10 000 streams / semaine</div>
+            <div class="news-b">Merci à toute la communauté valley + riders. Le son monte comme le baro.</div>
+            <span class="tag tag-news">NEWS</span>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+
+    <!-- Stats -->
+    <div class="card">
+      <p class="s-tag" style="margin-bottom:14px">// stats en direct</p>
+      <div class="stats-grid">
+        <div class="stat-b"><div class="stat-v" id="stat-lst">184</div><div class="stat-l">Auditeurs</div></div>
+        <div class="stat-b"><div class="stat-v" style="color:var(--sage)">24/7</div><div class="stat-l">En direct</div></div>
+        <div class="stat-b"><div class="stat-v" style="color:var(--peach)">128</div><div class="stat-l">kbps</div></div>
+        <div class="stat-b"><div class="stat-v" style="color:var(--lavender)">1035</div><div class="stat-l">mètres alt.</div></div>
+      </div>
+    </div>
+
+    <!-- Riders décoratifs + niveaux audio -->
+    <div class="card" style="padding:16px;">
+      <p class="s-tag" style="margin-bottom:10px">// niveaux</p>
+
+      <!-- Petite scène riders en inline SVG -->
+      <div class="riders-deco">
+        <!-- mini rider 1 -->
+        <svg viewBox="0 0 36 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="48" width="32" height="5" rx="2.5" fill="#a89fc8" transform="rotate(-10,18,50)"/>
+          <line x1="10" y1="46" x2="12" y2="36" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="24" y1="43" x2="22" y2="34" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <rect x="11" y="24" width="14" height="13" rx="4" fill="#1c2035" stroke="#a89fc8" stroke-width="1"/>
+          <line x1="11" y1="30" x2="5" y2="36" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <line x1="25" y1="29" x2="31" y2="24" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="18" cy="16" r="8" fill="#e8e4f0"/>
+          <rect x="10" y="9" width="16" height="9" rx="4" fill="#8db5a0"/>
+          <circle cx="18" cy="8" r="3" fill="#c9977a"/>
+          <rect x="11" y="15" width="14" height="5" rx="2.5" fill="#141724" stroke="#9ec4d4" stroke-width="1"/>
+        </svg>
+
+        <!-- mini rider 2 -->
+        <svg viewBox="0 0 36 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="48" width="32" height="5" rx="2.5" fill="#9ec4d4" transform="rotate(6,18,50)"/>
+          <line x1="10" y1="47" x2="14" y2="36" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="25" y1="50" x2="22" y2="36" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <rect x="11" y="22" width="14" height="14" rx="4" fill="#0e0f18" stroke="#9ec4d4" stroke-width="1"/>
+          <line x1="11" y1="28" x2="3" y2="24" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <line x1="25" y1="29" x2="33" y2="32" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="18" cy="13" r="8" fill="#e8e4f0"/>
+          <rect x="10" y="6" width="16" height="9" rx="4" fill="#9ec4d4"/>
+          <circle cx="18" cy="5" r="3" fill="#a89fc8"/>
+          <rect x="11" y="12" width="14" height="5" rx="2.5" fill="#141724" stroke="#c9977a" stroke-width="1"/>
+        </svg>
+
+        <!-- mini rider 3 -->
+        <svg viewBox="0 0 36 56" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="46" width="32" height="5" rx="2.5" fill="#c9977a" transform="rotate(-5,18,48)"/>
+          <line x1="12" y1="44" x2="16" y2="33" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <line x1="24" y1="44" x2="20" y2="33" stroke="#e8e4f0" stroke-width="3.5" stroke-linecap="round"/>
+          <rect x="11" y="20" width="14" height="14" rx="4" fill="#1c2035" stroke="#c9977a" stroke-width="1"/>
+          <!-- bras levés -->
+          <line x1="11" y1="26" x2="4" y2="18" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <line x1="25" y1="26" x2="32" y2="18" stroke="#e8e4f0" stroke-width="3" stroke-linecap="round"/>
+          <circle cx="18" cy="11" r="8" fill="#e8e4f0"/>
+          <rect x="10" y="4" width="16" height="9" rx="4" fill="#c9977a"/>
+          <circle cx="18" cy="3" r="3" fill="#8db5a0"/>
+          <rect x="11" y="10" width="14" height="5" rx="2.5" fill="#141724" stroke="#a89fc8" stroke-width="1"/>
+        </svg>
+
+        <!-- Montagne déco derrière -->
+        <svg style="position:absolute;bottom:0;right:0;opacity:.25;width:80px;height:60px" viewBox="0 0 80 60" fill="none">
+          <polygon points="0,60 40,5 80,60" fill="#9ec4d4"/>
+          <polygon points="15,60 40,20 65,60" fill="#e8e4f0" opacity=".5"/>
+        </svg>
+      </div>
+
+      <!-- Bars -->
+      <div class="bars" id="bars" style="margin-top:12px;"></div>
+    </div>
+
+    <!-- Message -->
+    <div class="card" id="message">
+      <div class="msg-h">📻 DROP UN MESSAGE</div>
+      <textarea class="msg-ta" rows="3" placeholder="Ton message pour les DJs..."></textarea>
+      <input class="msg-name" type="text" placeholder="Ton blaze / pseudo"/>
+      <button class="msg-btn" onclick="sendMsg()">ENVOYER EN DIRECT</button>
+      <p class="msg-ok" id="msg-ok">✔ Message balancé sur antenne !</p>
+    </div>
+
+  </aside>
+</main>
+
+<!-- ═══════════════ FOOTER ═══════════════ -->
+<footer>
+  <div class="foot-in">
+    <div class="foot-copy">
+      © 2026 PEAK RADIO<br>
+      <span style="color:var(--lavender)">Chamonix · Mont-Blanc · 1035m</span><br>
+      Powered by Icecast / Mixxx
+    </div>
+    <div class="socials">
+      <a href="#" aria-label="Instagram">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="20" height="20" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r="1" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="#" aria-label="SoundCloud">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 16.5a3.5 3.5 0 0 0 3.5 3.5H18a4 4 0 0 0 0-8 6 6 0 0 0-11.94 1"/></svg>
+      </a>
+      <a href="#" aria-label="YouTube">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="6" width="20" height="13" rx="2"/><polygon points="10,9 15,12.5 10,16" fill="currentColor" stroke="none"/></svg>
+      </a>
+      <a href="#" aria-label="Twitter">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4l16 16M4 20 20 4"/><path d="M20 4h-5l-4 5m-3 4-4 7h5l4-5"/></svg>
+      </a>
+    </div>
+  </div>
+</footer>
+
+</div><!-- /wrap -->
+
+<!-- ═══════════════ PLAYER STICKY ═══════════════ -->
+<div id="player">
+  <canvas class="player-viz" id="viz" height="40"></canvas>
+
+  <div class="player-inner">
+
+    <div class="track-info">
+      <div class="track-thumb">⛰️</div>
+      <div>
+        <div class="track-name" id="now-title">PEAK RADIO — En direct</div>
+        <div class="track-station">Chamonix Sound System</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="controls-row">
+        <button class="btn-sm" onclick="toggleMute()" id="mute-btn">🔊</button>
+        <button class="btn-play" onclick="togglePlay()" id="play-btn">▶</button>
+        <button class="btn-sm" onclick="reloadStream()" title="Reload">↺</button>
+      </div>
+      <div class="prog-row">
+        <span class="prog-lbl">LIVE</span>
+        <div class="prog-bar">
+          <div class="prog-fill" id="prog-fill"></div>
+          <div class="prog-dot" id="prog-dot"></div>
+        </div>
+        <span class="prog-lbl">◉</span>
+      </div>
+    </div>
+
+    <div class="vol-row">
+      <span class="vol-lbl">🔉</span>
+      <input type="range" class="vol" min="0" max="100" value="80" oninput="setVol(this.value)"/>
+    </div>
+
+  </div>
+</div>
+
+<audio id="radio" preload="none" crossorigin="anonymous"></audio>
+
+<!-- ═══════════════ PLAYLIST DATA ═══════════════ -->
+<script>
+/* ══════════════════════════════════════════════
+   CONFIG — MODIFIE CES VALEURS
+══════════════════════════════════════════════ */
+const CFG = {
+  streamURL: 'http://localhost:8000/stream',
+  metaURL:   'http://localhost:8000/status-json.xsl',
+  metaMount: '/stream',
+  metaMs:    5000,
+};
+
+/* ══════════════════════════════════════════════
+   PLAYLIST DÉMO
+══════════════════════════════════════════════ */
+const tracks = [
+  { n:'♫', e:'🎤', song:'Fresh Altitude',       artist:'DJ Fraîche',      t:'',       now:true  },
+  { n:'2', e:'🎵', song:'Summit Session',        artist:'Kollektif Blanc', t:'-6:12',  now:false },
+  { n:'3', e:'❄️', song:'Vallouise Tape',         artist:'Montage Crew',   t:'-14:30', now:false },
+  { n:'4', e:'🏔️', song:'Base Camp Riddim',      artist:'K-Cham',         t:'-21:00', now:false },
+  { n:'5', e:'🎿', song:'Zero Gravity (Remix)',   artist:'Alp & Sons',     t:'-29:40', now:false },
+];
+
+function renderPL(list) {
+  document.getElementById('playlist-list').innerHTML = list.map(t=>`
+    <div class="pl-item">
+      <span class="pl-num">${t.n}</span>
+      <div class="pl-dot">${t.e}</div>
+      <div class="pl-info">
+        <div class="pl-song">${t.song}</div>
+        <div class="pl-artist">${t.artist}</div>
+      </div>
+      ${t.now ? '<span class="onair-tag">ON AIR</span>' : `<span class="pl-time">${t.t}</span>`}
+    </div>
+  `).join('');
+}
+renderPL(tracks);
+
+/* ══════════════════════════════════════════════
+   AUDIO ENGINE
+══════════════════════════════════════════════ */
+let playing=false, muted=false;
+let actx, analyser, src, data, bufLen;
+
+const audio   = document.getElementById('radio');
+const playBtn = document.getElementById('play-btn');
+const player  = document.getElementById('player');
+
+function initAudio() {
+  if(actx) return;
+  actx    = new (window.AudioContext||window.webkitAudioContext)();
+  analyser = actx.createAnalyser();
+  analyser.fftSize = 128;
+  bufLen  = analyser.frequencyBinCount;
+  data    = new Uint8Array(bufLen);
+  src     = actx.createMediaElementSource(audio);
+  src.connect(analyser);
+  analyser.connect(actx.destination);
+}
+
+function togglePlay() {
+  if(!playing) {
+    initAudio();
+    audio.src = CFG.streamURL;
+    audio.load();
+    audio.play().then(()=>{
+      playing=true;
+      playBtn.textContent='⏸';
+      player.classList.add('playing');
+      animateProg();
+    }).catch(()=>{
+      document.getElementById('now-title').textContent='⚠ Flux indisponible — vérifiez l\'URL';
+    });
+  } else {
+    audio.pause(); audio.src='';
+    playing=false;
+    playBtn.textContent='▶';
+    player.classList.remove('playing');
+  }
+}
+
+function reloadStream(){
+  audio.pause();audio.src='';
+  playing=false;playBtn.textContent='▶';
+  player.classList.remove('playing');
+  setTimeout(togglePlay,300);
+}
+
+function setVol(v){ audio.volume=v/100; document.getElementById('mute-btn').textContent=v==0?'🔇':v<50?'🔈':'🔊'; }
+function toggleMute(){ muted=!muted; audio.muted=muted; document.getElementById('mute-btn').textContent=muted?'🔇':'🔊'; }
+
+/* ══════════════════════════════════════════════
+   PROGRESS (cosmetic — live stream)
+══════════════════════════════════════════════ */
+let progTimer;
+function animateProg() {
+  let p=0; clearInterval(progTimer);
+  progTimer=setInterval(()=>{
+    if(!playing){clearInterval(progTimer);return;}
+    p=(p+0.03)%100;
+    document.getElementById('prog-fill').style.width=p+'%';
+    document.getElementById('prog-dot').style.left=p+'%';
+  },500);
+}
+
+/* ══════════════════════════════════════════════
+   VISUALISEUR CANVAS
+══════════════════════════════════════════════ */
+const vizCanvas = document.getElementById('viz');
+const vizCtx    = vizCanvas.getContext('2d');
+
+// Couleurs pastel pour le viz
+const VIZ_COLS = ['#a89fc8','#9ec4d4','#8db5a0','#c9977a','#a89fc8'];
+
+function drawViz() {
+  requestAnimationFrame(drawViz);
+  const W=vizCanvas.width=vizCanvas.offsetWidth, H=vizCanvas.height;
+
+  if(analyser && playing) analyser.getByteFrequencyData(data);
+  else { const t=Date.now()/1400; for(let i=0;i<64;i++) data[i]=12+8*Math.abs(Math.sin(t+i*.4)); }
+
+  const bLen = bufLen||64;
+  const bw   = W/bLen;
+
+  vizCtx.clearRect(0,0,W,H);
+  for(let i=0;i<bLen;i++){
+    const v  = data[i];
+    const bh = (v/255)*H*.9;
+    const ci = Math.floor((i/bLen)*VIZ_COLS.length);
+    vizCtx.fillStyle = VIZ_COLS[ci]+'88';
+    vizCtx.fillRect(i*bw+.5, H-bh, bw-.8, bh);
+  }
+}
+vizCanvas.height=40;
+drawViz();
+
+/* ══════════════════════════════════════════════
+   LIGHT BARS SIDEBAR
+══════════════════════════════════════════════ */
+const barsEl = document.getElementById('bars');
+const BAR_COLS=['#a89fc8','#9ec4d4','#8db5a0','#c9977a','#a89fc8','#9ec4d4'];
+for(let i=0;i<18;i++){
+  const b=document.createElement('div');b.className='b';
+  b.style.background=BAR_COLS[i%BAR_COLS.length];
+  barsEl.appendChild(b);
+}
+
+function animBars(){
+  const bs=barsEl.querySelectorAll('.b');
+  bs.forEach((b,i)=>{
+    let h;
+    if(analyser&&playing){ h=Math.max(4,(data[i*2]/255)*36)+'px'; }
+    else{ const t=Date.now()/900; h=(4+10*Math.abs(Math.sin(t+i*.35)))+'px'; }
+    b.style.height=h;
+  });
+  requestAnimationFrame(animBars);
+}
+animBars();
+
+/* ══════════════════════════════════════════════
+   METADATA ICECAST
+══════════════════════════════════════════════ */
+function fetchMeta(){
+  fetch(CFG.metaURL)
+    .then(r=>r.json())
+    .then(d=>{
+      const ic=d.icestats;
+      if(!ic||!ic.source) return;
+      const ss=Array.isArray(ic.source)?ic.source:[ic.source];
+      const s=ss.find(x=>x.listenurl&&x.listenurl.includes(CFG.metaMount))||ss[0];
+      if(!s) return;
+      const title=s.title||s.server_name||'PEAK RADIO';
+      document.getElementById('now-title').textContent=title;
+      const lst=s.listeners;
+      if(lst!==undefined) document.getElementById('stat-lst').textContent=lst;
+    }).catch(()=>{});
+}
+fetchMeta();
+setInterval(fetchMeta, CFG.metaMs);
+
+// Simule variation auditeurs si pas de serveur
+setInterval(()=>{
+  const el=document.getElementById('stat-lst');
+  const cur=parseInt(el.textContent,10);
+  el.textContent=Math.max(1,cur+Math.floor(Math.random()*5)-2);
+},9000);
+
+/* ══════════════════════════════════════════════
+   MESSAGE
+══════════════════════════════════════════════ */
+function sendMsg(){
+  const ta=document.querySelector('.msg-ta');
+  const inp=document.querySelector('.msg-name');
+  const ok=document.getElementById('msg-ok');
+  if(!ta.value.trim()){ta.focus();return;}
+  console.log(`[PEAK RADIO] ${inp.value||'Anonyme'}: ${ta.value}`);
+  ta.value='';inp.value='';
+  ok.style.display='block';
+  setTimeout(()=>ok.style.display='none',4000);
+}
+</script>
+
+</body>
+</html>
